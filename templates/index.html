@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vietnamese Food Classifier 🍜</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Be Vietnam Pro", sans-serif;
+        background: linear-gradient(
+          135deg,
+          #1a1a2e 0%,
+          #16213e 50%,
+          #0f3460 100%
+        );
+        min-height: 100vh;
+        color: #fff;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .subtitle {
+        color: #a0a0a0;
+        font-size: 1.1rem;
+      }
+
+      .classes-badge {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .main-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 24px;
+        padding: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .upload-zone {
+        border: 2px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 16px;
+        padding: 60px 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .upload-zone:hover {
+        border-color: #48dbfb;
+        background: rgba(72, 219, 251, 0.05);
+      }
+
+      .upload-zone.dragover {
+        border-color: #feca57;
+        background: rgba(254, 202, 87, 0.1);
+        transform: scale(1.02);
+      }
+
+      .upload-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+      }
+
+      .upload-text {
+        font-size: 1.2rem;
+        color: #ccc;
+        margin-bottom: 10px;
+      }
+
+      .upload-hint {
+        font-size: 0.9rem;
+        color: #888;
+      }
+
+      #fileInput {
+        display: none;
+      }
+
+      .preview-section {
+        display: none;
+        margin-top: 30px;
+      }
+
+      .preview-container {
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+      }
+
+      @media (max-width: 600px) {
+        .preview-container {
+          flex-direction: column;
+        }
+      }
+
+      .image-preview {
+        flex: 1;
+        max-width: 300px;
+      }
+
+      .image-preview img {
+        width: 100%;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .actions {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .btn {
+        padding: 16px 32px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+      }
+
+      .btn-primary:disabled {
+        background: #444;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 40px;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #48dbfb;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .results {
+        display: none;
+        margin-top: 30px;
+      }
+
+      .result-card {
+        background: linear-gradient(
+          135deg,
+          rgba(72, 219, 251, 0.1),
+          rgba(254, 202, 87, 0.1)
+        );
+        border-radius: 20px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .result-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .result-emoji {
+        font-size: 3rem;
+      }
+
+      .result-title h2 {
+        font-size: 1.8rem;
+        margin-bottom: 5px;
+      }
+
+      .result-title .vietnamese {
+        font-size: 1.2rem;
+        color: #feca57;
+      }
+
+      .confidence-bar {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        height: 12px;
+        margin: 20px 0;
+        overflow: hidden;
+      }
+
+      .confidence-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+      }
+
+      .confidence-text {
+        text-align: right;
+        font-size: 1.1rem;
+        color: #48dbfb;
+        font-weight: 600;
+      }
+
+      .food-info {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .food-info p {
+        color: #ccc;
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+
+      .food-info .origin {
+        color: #888;
+        font-size: 0.9rem;
+      }
+
+      .all-predictions {
+        margin-top: 30px;
+      }
+
+      .all-predictions h3 {
+        font-size: 1rem;
+        color: #888;
+        margin-bottom: 15px;
+      }
+
+      .prediction-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        margin-bottom: 8px;
+      }
+
+      .prediction-item .name {
+        font-weight: 500;
+      }
+
+      .prediction-item .conf {
+        color: #48dbfb;
+        font-weight: 600;
+      }
+
+      .error {
+        display: none;
+        background: rgba(255, 107, 107, 0.2);
+        border: 1px solid rgba(255, 107, 107, 0.5);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        text-align: center;
+        color: #ff6b6b;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        color: #666;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🍜 Vietnamese Food Classifier</h1>
+        <p class="subtitle">
+          Upload an image to identify Vietnamese noodle dishes
+        </p>
+        <div class="classes-badge">
+          <span class="badge">🍲 Phở</span>
+          <span class="badge">🥣 Hủ Tiếu</span>
+          <span class="badge">🌶️ Bún Bò Huế</span>
+        </div>
+      </header>
+
+      <div class="main-card">
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">📸</div>
+          <p class="upload-text">Drop your image here or click to browse</p>
+          <p class="upload-hint">Supports JPG, PNG, WEBP</p>
+          <input type="file" id="fileInput" accept="image/*" />
+        </div>
+
+        <div class="preview-section" id="previewSection">
+          <div class="preview-container">
+            <div class="image-preview">
+              <img id="preview" src="" alt="Preview" />
+            </div>
+            <div class="actions">
+              <button class="btn btn-primary" id="predictBtn">
+                🔍 Identify Dish
+              </button>
+              <button class="btn btn-secondary" id="resetBtn">
+                ↻ Choose Another
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Analyzing your dish...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+          <div class="result-card">
+            <div class="result-header">
+              <div class="result-emoji" id="resultEmoji">🍲</div>
+              <div class="result-title">
+                <h2 id="resultName"></h2>
+                <p class="vietnamese" id="resultVietnamese"></p>
+              </div>
+            </div>
+
+            <div class="confidence-bar">
+              <div class="confidence-fill" id="confidenceFill"></div>
+            </div>
+            <p class="confidence-text">
+              <span id="confidenceValue"></span>% confidence
+            </p>
+
+            <div class="food-info">
+              <p id="resultDescription"></p>
+              <p class="origin">📍 <span id="resultOrigin"></span></p>
+            </div>
+
+            <div class="all-predictions">
+              <h3>All Predictions</h3>
+              <div id="allPredictions"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>Built with TensorFlow & Flask • MobileNetV2 Architecture</p>
+      </footer>
+    </div>
+
+    <script>
+      const uploadZone = document.getElementById("uploadZone");
+      const fileInput = document.getElementById("fileInput");
+      const previewSection = document.getElementById("previewSection");
+      const preview = document.getElementById("preview");
+      const predictBtn = document.getElementById("predictBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const loading = document.getElementById("loading");
+      const results = document.getElementById("results");
+      const error = document.getElementById("error");
+
+      let selectedFile = null;
+
+      const emojis = {
+        Pho: "🍲",
+        "Hu tieu": "🥣",
+        "Bun bo Hue": "🌶️",
+      };
+
+      // Upload zone events
+      uploadZone.addEventListener("click", () => fileInput.click());
+
+      uploadZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadZone.classList.add("dragover");
+      });
+
+      uploadZone.addEventListener("dragleave", () => {
+        uploadZone.classList.remove("dragover");
+      });
+
+      uploadZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove("dragover");
+        if (e.dataTransfer.files.length > 0) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+          handleFile(e.target.files[0]);
+        }
+      });
+
+      function handleFile(file) {
+        if (!file.type.startsWith("image/")) {
+          showError("Please select an image file");
+          return;
+        }
+
+        selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          preview.src = e.target.result;
+          uploadZone.style.display = "none";
+          previewSection.style.display = "block";
+          results.style.display = "none";
+          error.style.display = "none";
+        };
+        reader.readAsDataURL(file);
+      }
+
+      predictBtn.addEventListener("click", async () => {
+        if (!selectedFile) return;
+
+        loading.style.display = "block";
+        results.style.display = "none";
+        error.style.display = "none";
+        predictBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        try {
+          const response = await fetch("/predict", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            document.getElementById("resultEmoji").textContent =
+              emojis[data.prediction] || "🍜";
+            document.getElementById("resultName").textContent = data.prediction;
+            document.getElementById("resultVietnamese").textContent =
+              data.vietnamese_name;
+            document.getElementById(
+              "confidenceFill"
+            ).style.width = `${data.confidence}%`;
+            document.getElementById("confidenceValue").textContent =
+              data.confidence.toFixed(1);
+            document.getElementById("resultDescription").textContent =
+              data.description;
+            document.getElementById("resultOrigin").textContent = data.origin;
+
+            const allPreds = document.getElementById("allPredictions");
+            allPreds.innerHTML = "";
+            data.all_predictions.forEach((pred) => {
+              const item = document.createElement("div");
+              item.className = "prediction-item";
+              item.innerHTML = `
+                            <span class="name">${emojis[pred.class] || "🍜"} ${
+                pred.vietnamese
+              }</span>
+                            <span class="conf">${pred.confidence.toFixed(
+                              1
+                            )}%</span>
+                        `;
+              allPreds.appendChild(item);
+            });
+
+            results.style.display = "block";
+          } else {
+            showError(data.error || "Prediction failed");
+          }
+        } catch (err) {
+          showError("Failed to connect to server");
+        } finally {
+          loading.style.display = "none";
+          predictBtn.disabled = false;
+        }
+      });
+
+      resetBtn.addEventListener("click", () => {
+        selectedFile = null;
+        fileInput.value = "";
+        preview.src = "";
+        uploadZone.style.display = "block";
+        previewSection.style.display = "none";
+        results.style.display = "none";
+        error.style.display = "none";
+      });
+
+      function showError(message) {
+        error.textContent = "❌ " + message;
+        error.style.display = "block";
+      }
+    </script>
+  </body>
+</html>
